@@ -1,20 +1,34 @@
 import streamlit as st
 from summarizer import MultiDocSummarizer
-from data_loader import load_and_merge_documents
+from evaluation import evaluate_summary
 
-st.title("Multi-Document Summarizer")
-uploaded_files = st.file_uploader("Upload Documents", accept_multiple_files=True, type="txt")
+st.title("Multi-Document Summarization & Evaluation")
+
+# Upload text files
+uploaded_texts = st.file_uploader("Upload Text Files", accept_multiple_files=True, type="txt")
 
 if st.button("Summarize"):
-    # Save uploaded files temporarily
-    for file in uploaded_files:
-        with open(f"data/{file.name}", "wb") as f:
-            f.write(file.read())
-    
-    # Merge documents and summarize
-    merged_text = load_and_merge_documents("data")
-    summarizer = MultiDocSummarizer()
-    summary = summarizer.summarize(merged_text)
+    if uploaded_texts:
+        # Read text files
+        original_text = ""
+        for file in uploaded_texts:
+            original_text += file.read().decode("utf-8") + "\n"
 
-    st.subheader("Summary")
-    st.write(summary)
+        # Generate Summary
+        summarizer = MultiDocSummarizer()
+        generated_summary = summarizer.summarize(original_text)
+
+        # Display Summary
+        st.subheader("📜 Generated Summary")
+        st.write(generated_summary)
+
+        # Evaluate Summary
+        metrics = evaluate_summary(original_text, generated_summary)
+
+        # Display Evaluation Metrics
+        st.subheader("Evaluation Metrics")
+        for metric, (value, range_info) in metrics.items():
+            st.write(f"**{metric}:** {value:.4f}  {range_info}")
+
+    else:
+        st.warning("Please upload at least one text file.")
